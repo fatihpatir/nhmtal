@@ -178,6 +178,67 @@ button,
     border-bottom: var(--glass-border);
 }
 
+/* Bottom Navigation - Premium Glass */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--nav-height);
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: var(--glass-border);
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 1000;
+}
+
+.nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    gap: 4px;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.nav-item.active {
+    color: var(--primary-color);
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.nav-item .icon {
+    font-size: 1.6rem;
+    margin-bottom: 2px;
+}
+
+.nav-item .label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+}
+
+/* Plan Tabs Content */
+.plan-tab-content {
+    display: none;
+    min-height: 200px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.plan-tab-content.active {
+    display: block;
+}
+
 /* Main Layout */
 /* Main Layout */
 main#main-content {
