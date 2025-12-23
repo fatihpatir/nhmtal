@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check theme
     try {
-        const savedTheme = localStorage.getItem('app-theme') || 'default';
+        const savedTheme = localStorage.getItem('app-theme') || 'dark';
         applyTheme(savedTheme);
     } catch (e) { console.warn("Theme load failed", e); }
 });
@@ -119,6 +119,12 @@ function navigate(viewId, title) {
         }
         if (viewId === 'view-students') {
             renderAllStudents();
+        }
+        if (viewId === 'view-classes') {
+            renderClasses();
+        }
+        if (viewId === 'view-alumni') {
+            renderAlumni();
         }
     }
 }
@@ -421,8 +427,12 @@ function setupStudentLogic() {
     });
 
     document.getElementById('btn-back-from-student').addEventListener('click', () => {
-        if (currentClassId) loadClassDetail(currentClassId);
-        else navigate('view-alumni', 'Mezunlar');
+        // If we came from the global list, go back there
+        if (document.getElementById('view-students').classList.contains('active') || !currentClassId) {
+            navigate('view-students', 'Öğrenciler');
+        } else {
+            loadClassDetail(currentClassId);
+        }
     });
 
     document.getElementById('btn-edit-student').addEventListener('click', () => {
@@ -844,10 +854,14 @@ function setupPlansLogic() {
 
     // Viewer Logic
     document.getElementById('btn-close-viewer').onclick = () => {
-        const viewer = document.getElementById('modal-file-viewer');
-        const frame = document.getElementById('viewer-frame');
-        viewer.classList.remove('active');
-        frame.src = ''; // Clean up memory
+        if (history.state && history.state.modal === 'viewer') {
+            history.back(); // Will trigger popstate and close
+        } else {
+            const viewer = document.getElementById('modal-file-viewer');
+            const frame = document.getElementById('viewer-frame');
+            viewer.classList.remove('active');
+            frame.src = '';
+        }
     };
 
     // Tab switching plans
@@ -930,11 +944,10 @@ async function savePlan() {
 }
 
 async function convertFileToPDF(file) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
     const fileName = file.name.toLowerCase();
+    const arrayBuffer = await file.arrayBuffer();
 
-    // 1. PDF ise doğrudan oku
+    // 1. PDF
     if (fileName.endsWith('.pdf')) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -943,42 +956,45 @@ async function convertFileToPDF(file) {
         });
     }
 
-    // 2. Resim ise PDF'e yerleştir
-    if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png')) {
+    // 2. Word (.docx)
+    if (fileName.endsWith('.docx')) {
+        if (!window.mammoth) throw new Error("Mammoth kütüphanesi yüklenemedi.");
+        const result = await window.mammoth.convertToHtml({ arrayBuffer });
+        return await renderHtmlToPdf(result.value);
+    }
+
+    // 3. Excel (.xlsx)
+    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+        if (!window.XLSX) throw new Error("SheetJS kütüphanesi yüklenemedi.");
+        const workbook = window.XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const firstSheet = workbook.Sheets[firstSheetName];
+        const html = window.XLSX.utils.sheet_to_html(firstSheet);
+        return await renderHtmlToPdf(html);
+    }
+
+    // 4. Image
+    if (file.type.startsWith('image/')) {
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image();
                 img.src = e.target.result;
                 img.onload = () => {
+                    const { jsPDF } = window.jspdf;
                     const pdf = new jsPDF();
                     const pageWidth = pdf.internal.pageSize.getWidth();
                     const pageHeight = pdf.internal.pageSize.getHeight();
-                    const imgWidth = pageWidth - 20;
-                    const imgHeight = (img.height * imgWidth) / img.width;
-                    pdf.addImage(img, 'JPEG', 10, 10, imgWidth, imgHeight);
+                    // Simple fit logic
+                    const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
+                    const w = img.width * ratio;
+                    const h = img.height * ratio;
+                    pdf.addImage(img, 'JPEG', 10, 10, w - 20, h - 20);
                     resolve(pdf.output('datauristring'));
                 };
             };
             reader.readAsDataURL(file);
         });
-    }
-
-    // 3. Word (.docx) ise Mammoth ile HTML'e çevir
-    if (fileName.endsWith('.docx')) {
-        const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.convertToHtml({ arrayBuffer });
-        return await renderHtmlToPdf(result.value);
-    }
-
-    // 4. Excel (.xlsx) ise SheetJS ile HTML'e çevir
-    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer);
-        const firstSheetName = workbook.SheetNames[0];
-        const firstSheet = workbook.Sheets[firstSheetName];
-        const html = XLSX.utils.sheet_to_html(firstSheet);
-        return await renderHtmlToPdf(html);
     }
 
     throw new Error("Desteklenmeyen dosya formatı.");
@@ -1057,13 +1073,44 @@ function renderPlans(targetType) {
                 const title = document.getElementById('viewer-title');
 
                 title.textContent = p.originalName || p.title;
-                frame.src = p.fileData;
-                viewer.classList.add('active');
+
+                try {
+                    // Create Blob URL
+                    const byteString = atob(p.fileData.split(',')[1]);
+                    const arrayBuffer = new ArrayBuffer(byteString.length);
+                    const ia = new Uint8Array(arrayBuffer);
+                    for (let i = 0; i < byteString.length; i++) {
+                        ia[i] = byteString.charCodeAt(i);
+                    }
+                    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+                    const blobUrl = URL.createObjectURL(blob);
+
+                    frame.src = blobUrl;
+                    viewer.classList.add('active');
+
+                    // History state
+                    history.pushState({ modal: 'viewer' }, '', '#viewer');
+                } catch (e) {
+                    console.error("PDF Açma Hatası", e);
+                    // Fallback to directly setting src if blob fails (less likely but safe)
+                    frame.src = p.fileData;
+                    viewer.classList.add('active');
+                    history.pushState({ modal: 'viewer' }, '', '#viewer');
+                }
             };
             container.appendChild(el);
         });
     };
 }
+
+// Global Popstate for Viewer
+window.onpopstate = (event) => {
+    const viewer = document.getElementById('modal-file-viewer');
+    if (viewer.classList.contains('active')) {
+        viewer.classList.remove('active');
+        document.getElementById('viewer-frame').src = '';
+    }
+};
 
 // --- Settings ---
 function setupSettingsLogic() {
@@ -1092,6 +1139,8 @@ function applyTheme(theme) {
     document.body.classList.remove('theme-green', 'theme-dark');
     if (theme === 'green') document.body.classList.add('theme-green');
     if (theme === 'dark') document.body.classList.add('theme-dark');
+    // 'default' implies no extra class, just base :root variables
+    document.documentElement.setAttribute('data-theme', theme); // Explicit for CSS selectors if needed
 }
 
 function resetAppData() {

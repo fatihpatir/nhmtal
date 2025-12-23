@@ -3,8 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>NHMTAL Öğretmen</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4a90e2">
@@ -130,7 +129,7 @@
             </div>
 
             <button class="fab-btn" id="btn-add-class"
-                style="position:fixed; bottom: 85px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-color); color: white; font-size: 24px; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;">+</button>
+                style="position:fixed; bottom: 130px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-color); color: white; font-size: 24px; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;">+</button>
         </section>
 
         <!-- 3. Öğrenciler (Global List) -->
@@ -224,7 +223,7 @@
             </div>
 
             <button class="fab-btn" id="btn-add-plan"
-                style="position:fixed; bottom: 85px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-color); color: white; font-size: 24px; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;">+</button>
+                style="position:fixed; bottom: 130px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-color); color: white; font-size: 24px; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;">+</button>
         </section>
 
         <!-- Info View -->
@@ -286,7 +285,7 @@
                 <!-- Students -->
             </div>
             <button class="fab-btn" id="btn-add-student"
-                style="position:fixed; bottom: 85px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-color); color: white; font-size: 24px; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;">+</button>
+                style="position:fixed; bottom: 130px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-color); color: white; font-size: 24px; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;">+</button>
         </section>
 
         <!-- Student Profile View -->
@@ -499,6 +498,8 @@
                     </div>
                 </div>
 
+                <!-- Tags removed as per user request -->
+                <!-- 
                 <div class="form-group">
                     <label>Etiketler</label>
                     <div class="chip-selector" id="student-tags">
@@ -507,12 +508,12 @@
                         <div class="chip" data-value="support" style="--chip-color: #f1c40f;">Destek</div>
                         <div class="chip" data-value="passive" style="--chip-color: #95a5a6;">Pasif</div>
                     </div>
-                </div>
+                </div> 
+                -->
 
                 <div class="form-group">
                     <label>Genel Notlar</label>
-                    <textarea id="student-notes" rows="3" placeholder="Öğrenci hakkında genel gözlemler..."
-                        style="width:100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;"></textarea>
+                    <textarea id="student-notes" rows="4" placeholder="Öğrenci hakkında genel gözlemler..."></textarea>
                 </div>
 
                 <div class="modal-actions">
@@ -539,8 +540,7 @@
 
                 <div class="form-group">
                     <label>Not</label>
-                    <textarea id="note-text" rows="4" required placeholder="Notunuzu buraya yazın..."
-                        style="width:100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;"></textarea>
+                    <textarea id="note-text" rows="5" required placeholder="Notunuzu buraya yazın..."></textarea>
                 </div>
 
                 <div class="modal-actions">

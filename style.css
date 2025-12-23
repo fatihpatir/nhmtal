@@ -547,8 +547,11 @@ select:focus {
     box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.2);
     animation: modalIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: modalIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
+    max-height: 80vh;
+    /* Prevent overlap with bottom nav */
 }
 
 @keyframes modalIn {
@@ -594,6 +597,34 @@ body.theme-dark .btn-text {
     max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
+}
+
+/* Expanded Form Inputs */
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    outline: none;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.8);
+    font-family: inherit;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--primary-color);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
 }
 
 .form-row {
