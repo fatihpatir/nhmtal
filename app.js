@@ -840,6 +840,16 @@ function setupPlansLogic() {
     document.getElementById('btn-add-plan').onclick = () => {
         document.getElementById('form-plan').reset();
         document.getElementById('plan-id').value = '';
+
+        // Auto-select type based on active tab
+        const activeTab = document.querySelector('#view-plans .tab-btn.active').getAttribute('data-tab');
+        const typeSelect = document.getElementById('plan-type');
+        if (activeTab === 'plan-weekly') {
+            typeSelect.value = 'weekly';
+        } else {
+            typeSelect.value = 'yearly';
+        }
+
         document.getElementById('modal-plan').classList.add('active');
     };
     document.getElementById('btn-close-plan-modal').onclick = () => document.getElementById('modal-plan').classList.remove('active');
@@ -1001,41 +1011,46 @@ async function convertFileToPDF(file) {
 }
 
 async function renderHtmlToPdf(htmlContent) {
+    // New Implementation using jsPDF.html() which is cleaner and handles fonts/paging better internally
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'pt', 'a4'); // Points are better for HTML mapping
+
     const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px';
-    tempDiv.style.width = '800px';
-    tempDiv.style.padding = '40px';
+    tempDiv.style.width = '595pt'; // A4 Width in pts
+    tempDiv.style.padding = '20px';
     tempDiv.style.background = 'white';
     tempDiv.style.color = 'black';
     tempDiv.style.fontFamily = 'Arial, sans-serif';
+    tempDiv.style.fontSize = '12pt';
     tempDiv.innerHTML = `
         <div style="margin-bottom: 20px; border-bottom: 2px solid #4a90e2; padding-bottom: 10px;">
-            <h2 style="color: #4a90e2;">Ders Planı</h2>
-            <small style="color: #888;">NHMTAL Öğretmen Asistanı tarafından dönüştürüldü</small>
+            <h2 style="color: #4a90e2; font-size: 18pt;">Ders Planı</h2>
+            <small style="color: #888; font-size: 10pt;">NHMTAL Öğretmen Asistanı tarafından dönüştürüldü</small>
         </div>
-        ${htmlContent}
+        <div style="font-size: 11pt; line-height: 1.4;">
+            ${htmlContent}
+        </div>
     `;
 
+    // Make visible but hidden for rendering context
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-10000px';
+    tempDiv.style.top = '0';
     document.body.appendChild(tempDiv);
 
-    try {
-        const canvas = await window.html2canvas(tempDiv, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgProps = pdf.getImageProperties(imgData);
-        const imgWidth = pageWidth - 20;
-        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-
-        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-        return pdf.output('datauristring');
-    } finally {
-        document.body.removeChild(tempDiv);
-    }
+    return new Promise((resolve, reject) => {
+        pdf.html(tempDiv, {
+            callback: function (doc) {
+                document.body.removeChild(tempDiv);
+                resolve(doc.output('datauristring'));
+            },
+            x: 0,
+            y: 0,
+            autoPaging: 'text', // Better page splitting
+            width: 595, // Target width
+            windowWidth: 800 // Virtual window width for CSS
+        });
+    });
 }
 
 function renderPlans(targetType) {
