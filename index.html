@@ -127,16 +127,23 @@
                 </div>
             </div>
 
-            <button id="btn-add-class" class="fab-btn">
-                <span>+</span>
-            </button>
+            </div>
+
+            <button class="fab-btn" id="btn-add-class"
+                style="position:fixed; bottom: 85px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-color); color: white; font-size: 24px; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;">+</button>
         </section>
 
-        <!-- 3. Öğrenciler -->
+        <!-- 3. Öğrenciler (Global List) -->
         <section id="view-students" class="view">
-            <div class="empty-state">
-                <h2>Öğrenciler</h2>
-                <p>Tüm öğrenci listesi ve arama. Profil sekmesinden sınıflara girerek öğrencilere ulaşabilirsiniz.</p>
+            <div class="filter-bar">
+                <input type="text" id="global-student-search" placeholder="Tüm öğrencilerde ara..."
+                    class="search-input">
+            </div>
+            <div id="global-student-list" class="student-grid">
+                <!-- Students injected here -->
+                <div class="empty-state">
+                    <p>Öğrenci bulunamadı.</p>
+                </div>
             </div>
         </section>
 
@@ -278,9 +285,8 @@
             <div id="student-list" class="student-grid">
                 <!-- Students -->
             </div>
-            <button id="btn-add-student" class="fab-btn">
-                <span>+</span>
-            </button>
+            <button class="fab-btn" id="btn-add-student"
+                style="position:fixed; bottom: 85px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-color); color: white; font-size: 24px; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;">+</button>
         </section>
 
         <!-- Student Profile View -->
@@ -429,18 +435,9 @@
                     <input type="text" id="class-name" required placeholder="Örn: 9-A, 11-B">
                 </div>
 
-                <div class="form-group">
-                    <label>Seviye</label>
-                    <div class="chip-selector" id="level-selector">
-                        <div class="chip" data-value="9">9. Sınıf</div>
-                        <div class="chip" data-value="10">10. Sınıf</div>
-                        <div class="chip" data-value="11">11. Sınıf</div>
-                        <div class="chip" data-value="12">12. Sınıf</div>
-                    </div>
-                    <input type="hidden" id="class-level" required>
-                </div>
-
                 <div class="modal-actions">
+                    <button type="button" class="btn-danger" id="btn-delete-class"
+                        style="display:none; margin-right: auto;">Sil</button>
                     <button type="button" class="btn-text" id="btn-close-class-modal">İptal</button>
                     <button type="submit" class="btn-primary">Kaydet</button>
                 </div>
@@ -519,6 +516,8 @@
                 </div>
 
                 <div class="modal-actions">
+                    <button type="button" class="btn-danger" id="btn-delete-student"
+                        style="display:none; margin-right: auto;">Sil</button>
                     <button type="button" class="btn-text" id="btn-close-student-modal">İptal</button>
                     <button type="submit" class="btn-primary">Kaydet</button>
                 </div>
@@ -640,6 +639,31 @@
     </div>
 
     <div id="print-area"></div>
+
+    <!-- File Viewer Modal (Full Screen) -->
+    <!-- File Viewer Modal (Full Screen) -->
+    <div id="modal-file-viewer" class="modal-overlay" style="z-index: 2000;">
+        <div class="modal-content"
+            style="width: 100%; height: 100%; max-width: none !important; border-radius: 0 !important; padding: 0 !important; display: flex; flex-direction: column; background: #2c2c2c;">
+
+            <!-- Premium Header -->
+            <div
+                style="padding: 15px 20px; background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10;">
+                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+                    <span style="font-size: 1.2rem;">📄</span>
+                    <h3 id="viewer-title"
+                        style="margin: 0; color: white; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;">
+                        Belge Önizleme</h3>
+                </div>
+                <button type="button" id="btn-close-viewer" class="btn-text"
+                    style="color: white; background: rgba(255,255,255,0.15); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: 15px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(5px);">✕</button>
+            </div>
+
+            <!-- Darker Background for Document Contrast -->
+            <iframe id="viewer-frame"
+                style="flex: 1; border: none; width: 100%; height: 100%; background: #525659;"></iframe>
+        </div>
+    </div>
 
     <!-- PDF Conversion Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

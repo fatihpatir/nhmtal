@@ -257,7 +257,7 @@ function setupClassLogic() {
         form.reset();
         document.getElementById('class-id').value = '';
         document.getElementById('modal-class-title').textContent = 'Yeni Sınıf Ekle';
-        document.querySelectorAll('#level-selector .chip').forEach(c => c.classList.remove('selected'));
+        document.getElementById('btn-delete-class').style.display = 'none'; // Hide delete
         modal.classList.add('active');
     });
 
@@ -268,30 +268,46 @@ function setupClassLogic() {
         saveClass();
     });
 
-    document.querySelectorAll('#level-selector .chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-            document.querySelectorAll('#level-selector .chip').forEach(c => c.classList.remove('selected'));
-            chip.classList.add('selected');
-            document.getElementById('class-level').value = chip.getAttribute('data-value');
-        });
-    });
+    document.getElementById('btn-delete-class').onclick = () => {
+        const id = Number(document.getElementById('class-id').value);
+        if (confirm("Bu sınıfı ve içindeki TÜM ÖĞRENCİLERİ silmek istediğinize emin misiniz?")) {
+            deleteClass(id);
+        }
+    };
 }
 
 function saveClass() {
     const id = document.getElementById('class-id').value;
     const name = document.getElementById('class-name').value;
-    const level = document.getElementById('class-level').value;
 
-    if (!level) {
-        alert("Lütfen sınıf seviyesi seçin.");
-        return;
-    }
+    // Auto-infer level (e.g., "9-A" -> 9, "Hazırlık" -> 0)
+    let level = parseInt(name);
+    if (isNaN(level)) level = 0;
 
     const data = { name, level };
     if (id) data.id = Number(id);
 
     const tx = db.transaction(['classes'], 'readwrite');
     tx.objectStore('classes').put(data).onsuccess = () => {
+        document.getElementById('modal-class').classList.remove('active');
+        renderClasses();
+    };
+}
+
+function deleteClass(id) {
+    const tx = db.transaction(['classes', 'students'], 'readwrite');
+    tx.objectStore('classes').delete(id);
+    // Also delete students in this class? Or move to alumni/unassigned?
+    // User said "sil". Usually safe to just delete class. 
+    // But let's be clean and delete students too or allow cascading.
+    // Index-based deletion:
+    const sStore = tx.objectStore('students');
+    sStore.getAll().onsuccess = (e) => {
+        const students = e.target.result.filter(s => s.classId === id);
+        students.forEach(s => sStore.delete(s.id));
+    };
+
+    tx.oncomplete = () => {
         document.getElementById('modal-class').classList.remove('active');
         renderClasses();
     };
@@ -316,12 +332,25 @@ function renderClasses() {
                 <div class="student-list-avatar">🏫</div>
                 <div class="student-info">
                     <h4>${c.name}</h4>
-                    <p>${c.level}. Sınıf Seviyesi</p>
+                    <p>${c.level > 0 ? c.level + '. Sınıf' : 'Sınıf'}</p>
                 </div>
+                <button class="btn-text" style="margin-left:auto; font-size:1.2rem; color:#888;" onclick="event.stopPropagation(); openEditClassModal(${c.id})">⚙️</button>
             `;
             card.onclick = () => loadClassDetail(c.id);
             list.appendChild(card);
         });
+    };
+}
+
+function openEditClassModal(id) {
+    const tx = db.transaction(['classes'], 'readonly');
+    tx.objectStore('classes').get(id).onsuccess = (e) => {
+        const c = e.target.result;
+        document.getElementById('class-id').value = c.id;
+        document.getElementById('class-name').value = c.name;
+        document.getElementById('modal-class-title').textContent = 'Sınıfı Düzenle';
+        document.getElementById('btn-delete-class').style.display = 'block'; // Show delete
+        document.getElementById('modal-class').classList.add('active');
     };
 }
 
@@ -349,6 +378,7 @@ function setupStudentLogic() {
         document.getElementById('student-class-id').value = currentClassId;
         document.getElementById('student-form-img').style.display = 'none';
         document.getElementById('student-form-avatar').style.display = 'block';
+        document.getElementById('btn-delete-student').style.display = 'none'; // Hide delete
         document.querySelectorAll('#student-tags .chip').forEach(c => c.classList.remove('selected'));
         modal.classList.add('active');
     });
@@ -417,8 +447,16 @@ function setupStudentLogic() {
             });
 
             modal.classList.add('active');
+            document.getElementById('btn-delete-student').style.display = 'block'; // Show delete
         };
     });
+
+    document.getElementById('btn-delete-student').onclick = () => {
+        const id = Number(document.getElementById('student-id').value);
+        if (confirm("Bu öğrenciyi silmek istediğinize emin misiniz?")) {
+            deleteStudent(id);
+        }
+    };
 }
 
 function saveStudent() {
@@ -783,6 +821,14 @@ function setupPlansLogic() {
     // Scroll Memory for Tabs
     const planScrollPositions = { 'plan-yearly': 0, 'plan-weekly': 0 };
 
+    // Viewer Logic
+    document.getElementById('btn-close-viewer').onclick = () => {
+        const viewer = document.getElementById('modal-file-viewer');
+        const frame = document.getElementById('viewer-frame');
+        viewer.classList.remove('active');
+        frame.src = ''; // Clean up memory
+    };
+
     // Tab switching plans
     document.querySelectorAll('#view-plans .tab-btn').forEach(btn => {
         btn.onclick = () => {
@@ -937,7 +983,7 @@ async function renderHtmlToPdf(htmlContent) {
     document.body.appendChild(tempDiv);
 
     try {
-        const canvas = await html2canvas(tempDiv, { scale: 2 });
+        const canvas = await window.html2canvas(tempDiv, { scale: 2 });
         const imgData = canvas.toDataURL('image/png');
 
         const { jsPDF } = window.jspdf;
@@ -985,8 +1031,13 @@ function renderPlans(targetType) {
                 </div>
             `;
             el.querySelector('button').onclick = () => {
-                const win = window.open();
-                win.document.write(`<iframe src="${p.fileData}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                const viewer = document.getElementById('modal-file-viewer');
+                const frame = document.getElementById('viewer-frame');
+                const title = document.getElementById('viewer-title');
+
+                title.textContent = p.originalName || p.title;
+                frame.src = p.fileData;
+                viewer.classList.add('active');
             };
             container.appendChild(el);
         });
