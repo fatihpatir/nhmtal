@@ -480,18 +480,27 @@
             <h3 id="import-modal-title">Excel'den Aktar</h3>
             <div id="import-step-1">
                 <div class="info-box" style="margin-bottom: 20px;">
-                    <strong>💡 Hızlı İpucu:</strong><br>
-                    e-Okul'da <strong>Raporlar (Yazıcı Simgesi)</strong> kısmından <strong>"1. Dönem Puan
-                        Çizelgesi"</strong> raporunu açıp <strong>Excel</strong> olarak indirdiğiniz dosyayı buraya
-                    atarsanız, sınıf ve öğrencileriniz saniyeler içinde tertemiz eklenir.
+                    <strong>💡 e-Okul'dan Nasıl Alınır?</strong><br>
+                    <ol style="margin-top: 10px; padding-left: 20px; font-size: 0.85rem; line-height: 1.4;">
+                        <li><strong>Kurum İşlemleri > Ders Notu Girişi</strong> ekranına girin.</li>
+                        <li>Üstteki <strong>Yazıcı (Raporlar)</strong> simgesine tıklayın.</li>
+                        <li>Açılan pencerede üstten <strong>HTML5</strong> seçeneğini seçin.</li>
+                        <li><strong>Puan Çizelgeleri - Yeni Yönetmeliğe Uygun (1. Dönem) Şube Sınıf</strong> raporunu
+                            seçin.</li>
+                        <li>Sınıfınızı seçip raporu görüntüleyin.</li>
+                        <li>Ekranın üstündeki kaydet simgesine basıp <strong>Excel</strong> olarak indirin.</li>
+                    </ol>
                 </div>
-                <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.9rem;">Dosyayı seçmek için
-                    aşağıdaki butona basın:</p>
+                <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.9rem;">İndirdiğiniz Excel
+                    dosyasını seçin:</p>
                 <label class="btn-secondary"
-                    style="display: block; padding: 30px; border: 2px dashed var(--primary-color); cursor: pointer; text-align: center;">
+                    style="display: block; padding: 30px; border: 2px dashed var(--primary-color); cursor: pointer; text-align: center; margin-bottom: 15px;">
                     📁 Dosya Seç
                     <input type="file" id="excel-file-input" accept=".xlsx, .xls" hidden>
                 </label>
+                <div class="modal-actions">
+                    <button type="button" class="btn-text" id="btn-close-excel-intro">Kapat</button>
+                </div>
             </div>
 
             <div id="import-step-2" style="display: none;">

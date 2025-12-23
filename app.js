@@ -345,6 +345,10 @@ function setupExcelImportLogic() {
         if (file) handleExcelFile(file);
     };
 
+    document.getElementById('btn-close-excel-intro').onclick = () => {
+        document.getElementById('modal-excel-import').classList.remove('active');
+    };
+
     document.getElementById('btn-cancel-import').onclick = () => {
         document.getElementById('import-step-2').style.display = 'none';
         document.getElementById('import-step-1').style.display = 'block';
