@@ -4,15 +4,23 @@
     --secondary-color: #50e3c2;
     --bg-color: #f0f2f5;
     --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    --card-bg: rgba(255, 255, 255, 0.65);
-    /* Increased transparency */
-    --text-color: #2d3436;
-    --text-muted: #636e72;
+
+    /* NO MORE WHITE - Glass Tint Only */
+    --card-bg: rgba(255, 255, 255, 0.25);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.3);
+
+    --text-color: #1a1a1a;
+    /* Darker for contrast on glass */
+    --text-muted: #4a4a4a;
+
     --border-radius: 16px;
-    --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+    --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
     --header-height: 70px;
     --nav-height: 80px;
-    --glass-border: 1px solid rgba(255, 255, 255, 0.45);
+
+    /* Input Glass */
+    --input-bg: rgba(255, 255, 255, 0.3);
+    --input-border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 body.theme-green {
@@ -20,6 +28,8 @@ body.theme-green {
     --primary-rgb: 0, 184, 148;
     --secondary-color: #55efc4;
     --bg-gradient: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+    --card-bg: rgba(255, 255, 255, 0.2);
+    --text-color: #054d44;
 }
 
 body.theme-dark {
@@ -28,16 +38,22 @@ body.theme-dark {
     --secondary-color: #0984e3;
     --bg-color: #1a1a1a;
     --bg-gradient: linear-gradient(135deg, #2d3436 0%, #000000 74%);
-    --card-bg: rgba(45, 52, 54, 0.8);
-    --text-color: #dfe6e9;
-    --text-muted: #b2bec3;
-    --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+
+    /* Dark Glass */
+    --card-bg: rgba(0, 0, 0, 0.4);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+
+    --text-color: #f5f6fa;
+    --text-muted: #dcdde1;
+    --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+
+    --input-bg: rgba(0, 0, 0, 0.3);
+    --input-border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 body.theme-dark .app-header,
 body.theme-dark .bottom-nav {
-    background: rgba(30, 30, 30, 0.85);
+    background: rgba(20, 20, 20, 0.6);
     border-color: rgba(255, 255, 255, 0.05);
 }
 
@@ -114,23 +130,22 @@ button,
 }
 
 /* Header */
+/* Header - Premium Glass */
 .app-header {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card-bg);
+    /* Use shared glass variable */
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     position: sticky;
     top: 0;
     height: calc(var(--header-height) + env(safe-area-inset-top));
     padding-top: env(safe-area-inset-top);
     display: flex;
-    display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     z-index: 100;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    border-bottom: var(--glass-border);
 }
 
 .app-header h1 {
@@ -198,9 +213,10 @@ button,
 }
 
 /* Bottom Navigation */
+/* Bottom Navigation - Premium Glass */
 .bottom-nav {
     height: var(--nav-height);
-    background: rgba(255, 255, 255, 0.85);
+    background: var(--card-bg);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
     position: fixed;
@@ -211,9 +227,9 @@ button,
     display: flex;
     justify-content: space-around;
     align-items: center;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow);
     z-index: 1000;
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    border: var(--glass-border);
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
@@ -584,7 +600,9 @@ select:focus {
 }
 
 body.theme-dark .modal-content {
-    background: #333;
+    background: rgba(0, 0, 0, 0.65);
+    /* Dark Glass */
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #fff;
 }
 
@@ -600,18 +618,28 @@ body.theme-dark .btn-text {
 }
 
 /* Expanded Form Inputs */
+/* Expanded Form Inputs - Glass Edition */
 .form-group input,
 .form-group select,
 .form-group textarea {
     width: 100%;
     padding: 14px;
-    border: 1px solid #ddd;
+    border: var(--input-border);
     border-radius: 12px;
     font-size: 1.05rem;
     outline: none;
     transition: all 0.2s;
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--input-bg);
+    color: var(--text-color);
     font-family: inherit;
+    backdrop-filter: blur(5px);
+}
+
+/* Fix Placeholder Colors for Glass */
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
 }
 
 .form-group textarea {
@@ -738,13 +766,17 @@ body.theme-dark .btn-text {
 }
 
 /* Student Profile Hero */
+/* Student Profile Hero - Glass */
 .student-profile-hero {
     text-align: center;
-    background: white;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     padding: 20px;
     border-radius: 16px;
     box-shadow: var(--shadow);
     margin-bottom: 20px;
+    border: var(--glass-border);
 }
 
 .profile-image-container.medium {

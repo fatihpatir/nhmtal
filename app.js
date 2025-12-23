@@ -1011,46 +1011,74 @@ async function convertFileToPDF(file) {
 }
 
 async function renderHtmlToPdf(htmlContent) {
-    // New Implementation using jsPDF.html() which is cleaner and handles fonts/paging better internally
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'pt', 'a4'); // Points are better for HTML mapping
 
-    const tempDiv = document.createElement('div');
-    tempDiv.style.width = '595pt'; // A4 Width in pts
-    tempDiv.style.padding = '20px';
-    tempDiv.style.background = 'white';
-    tempDiv.style.color = 'black';
-    tempDiv.style.fontFamily = 'Arial, sans-serif';
-    tempDiv.style.fontSize = '12pt';
-    tempDiv.innerHTML = `
-        <div style="margin-bottom: 20px; border-bottom: 2px solid #4a90e2; padding-bottom: 10px;">
-            <h2 style="color: #4a90e2; font-size: 18pt;">Ders Planı</h2>
-            <small style="color: #888; font-size: 10pt;">NHMTAL Öğretmen Asistanı tarafından dönüştürüldü</small>
+    // Create a visibly positioned but obscured container to ensure rendering engines catch it
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '800px'; // Standard width
+    container.style.zIndex = '-9999';
+    container.style.background = '#ffffff';
+    container.style.padding = '40px';
+    container.style.color = '#000000';
+
+    // Inject Content
+    container.innerHTML = `
+        <div style="border-bottom: 2px solid #4a90e2; padding-bottom: 15px; margin-bottom: 30px;">
+            <h2 style="color: #4a90e2; margin: 0; font-family: sans-serif;">Ders Planı</h2>
+            <small style="color: #666; font-family: sans-serif;">NHMTAL Öğretmen Asistanı</small>
         </div>
-        <div style="font-size: 11pt; line-height: 1.4;">
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; line-height: 1.6;">
             ${htmlContent}
         </div>
     `;
 
-    // Make visible but hidden for rendering context
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-10000px';
-    tempDiv.style.top = '0';
-    document.body.appendChild(tempDiv);
+    document.body.appendChild(container);
 
-    return new Promise((resolve, reject) => {
-        pdf.html(tempDiv, {
-            callback: function (doc) {
-                document.body.removeChild(tempDiv);
-                resolve(doc.output('datauristring'));
-            },
-            x: 0,
-            y: 0,
-            autoPaging: 'text', // Better page splitting
-            width: 595, // Target width
-            windowWidth: 800 // Virtual window width for CSS
+    // Wait for DOM to settle
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    try {
+        const canvas = await window.html2canvas(container, {
+            scale: 1, // Safe scale for mobile memory
+            useCORS: true,
+            logging: false,
+            windowWidth: 800
         });
-    });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.85); // JPEG is more efficient
+        const pdf = new jsPDF('p', 'mm', 'a4');
+
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 297; // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        // First Page
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        // Subsequent Pages (if long content)
+        while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        return pdf.output('datauristring');
+
+    } catch (err) {
+        console.error("PDF Render Failed:", err);
+        throw new Error("PDF oluşturulurken bir görsel hatası oluştu.");
+    } finally {
+        if (document.body.contains(container)) {
+            document.body.removeChild(container);
+        }
+    }
 }
 
 function renderPlans(targetType) {
