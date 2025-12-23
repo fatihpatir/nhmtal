@@ -435,23 +435,48 @@ function setupProfileLogic() {
     document.getElementById('setup-form').addEventListener('submit', (e) => {
         e.preventDefault();
 
-        const name = document.getElementById('setup-name').value;
-        const branch = document.getElementById('setup-branch').value;
-        const school = document.getElementById('setup-school').value;
-        const gender = document.getElementById('setup-gender').value;
+        if (!db) {
+            alert('Veritabanı henüz hazır değil. Lütfen sayfayı yenileyin veya birkaç saniye bekleyin.');
+            return;
+        }
 
-        const profileData = {
-            id: 'teacher_profile', // Singleton
-            name,
-            branch,
-            school,
-            gender,
-            avatar: selectedAvatar,
-            photo: selectedImageBase64,
-            createdAt: new Date()
-        };
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.textContent;
 
-        saveTeacherProfile(profileData);
+        // Show loading state
+        btn.disabled = true;
+        btn.textContent = 'Kaydediliyor...';
+
+        try {
+            const name = document.getElementById('setup-name').value;
+            const branch = document.getElementById('setup-branch').value;
+            const school = document.getElementById('setup-school').value;
+            const gender = document.getElementById('setup-gender').value;
+
+            const profileData = {
+                id: 'teacher_profile', // Singleton
+                name,
+                branch,
+                school,
+                gender,
+                avatar: selectedAvatar,
+                photo: selectedImageBase64,
+                createdAt: new Date()
+            };
+
+            // Pass error callback to reset button
+            saveTeacherProfile(profileData, () => {
+                // Error callback
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+
+        } catch (err) {
+            console.error("Form Error:", err);
+            alert("Beklenmedik bir hata oluştu: " + err.message);
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
     });
 
     // Edit Button in Profile View
@@ -485,20 +510,40 @@ function checkFirstLaunch() {
     };
 }
 
-function saveTeacherProfile(data) {
-    const transaction = db.transaction(['teachers'], 'readwrite');
-    const objectStore = transaction.objectStore('teachers');
-    const request = objectStore.put(data);
+function saveTeacherProfile(data, onErrorCallback) {
+    if (!db) {
+        alert("Veritabanı bağlantısı yok!");
+        if (onErrorCallback) onErrorCallback();
+        return;
+    }
 
-    request.onsuccess = () => {
-        alert('Profil kaydedildi!');
-        loadProfileView(data);
-        showAppMode();
-    };
+    try {
+        const transaction = db.transaction(['teachers'], 'readwrite');
+        const objectStore = transaction.objectStore('teachers');
+        const request = objectStore.put(data);
 
-    request.onerror = () => {
-        alert('Kaydetme başarısız!');
-    };
+        request.onsuccess = () => {
+            // alert('Profil kaydedildi!'); // Removed alert for smoother flow
+            loadProfileView(data);
+            showAppMode();
+        };
+
+        request.onerror = (e) => {
+            console.error("Save Error:", e.target.error);
+            alert('Kaydetme başarısız! ' + (e.target.error ? e.target.error.message : ''));
+            if (onErrorCallback) onErrorCallback();
+        };
+
+        transaction.onerror = (e) => {
+            console.error("Transaction Error:", e);
+            if (onErrorCallback) onErrorCallback();
+        };
+
+    } catch (e) {
+        console.error("DB Transaction Error:", e);
+        alert("Veritabanı hatası: " + e.message);
+        if (onErrorCallback) onErrorCallback();
+    }
 }
 
 function loadProfileView(data) {
