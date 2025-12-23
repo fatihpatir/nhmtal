@@ -117,6 +117,9 @@ function navigate(viewId, title) {
             renderPlans('yearly');
             renderPlans('weekly');
         }
+        if (viewId === 'view-students') {
+            renderAllStudents();
+        }
     }
 }
 
@@ -459,53 +462,71 @@ function setupStudentLogic() {
     };
 }
 
+// Consolidated saveStudent and removed duplicates
 function saveStudent() {
     const id = document.getElementById('student-id').value;
     const name = document.getElementById('student-name').value;
     const number = document.getElementById('student-number').value;
     const classId = Number(document.getElementById('student-class-id').value);
-    const photo = document.getElementById('student-form-img').src;
 
-    const selectedTags = Array.from(document.querySelectorAll('#student-tags .chip.selected')).map(c => c.getAttribute('data-value'));
+    // Photo Logic
+    const photoImg = document.getElementById('student-form-img');
+    const photo = (photoImg.style.display === 'block') ? photoImg.src : null;
 
-    const data = {
-        name, number, classId,
-        tags: selectedTags,
-        photo: photo.startsWith('data:') ? photo : null,
+    // Tags
+    const tags = [];
+    document.querySelectorAll('#student-tags .chip.selected').forEach(c => tags.push(c.getAttribute('data-value')));
+
+    const studentData = {
+        number,
+        name,
+        classId,
+        photo,
+        tags,
         parents: {
-            mother: { name: document.getElementById('student-mother-name').value, tel: document.getElementById('student-mother-tel').value },
-            father: { name: document.getElementById('student-father-name').value, tel: document.getElementById('student-father-tel').value }
+            mother: {
+                name: document.getElementById('student-mother-name').value,
+                tel: document.getElementById('student-mother-tel').value
+            },
+            father: {
+                name: document.getElementById('student-father-name').value,
+                tel: document.getElementById('student-father-tel').value
+            }
         },
         notes: document.getElementById('student-notes').value,
-        teacherNotes: [],
-        exams: []
+        status: 'active',
+        updatedAt: new Date()
     };
 
     if (id) {
-        data.id = Number(id);
-        const txCheck = db.transaction(['students'], 'readonly');
-        txCheck.objectStore('students').get(data.id).onsuccess = (e) => {
-            const old = e.target.result;
-            data.teacherNotes = old.teacherNotes || [];
-            data.exams = old.exams || [];
-            data.status = old.status;
-            data.gradYear = old.gradYear;
-            data.prevClass = old.prevClass;
-
-            const txUpdate = db.transaction(['students'], 'readwrite');
-            txUpdate.objectStore('students').put(data).onsuccess = () => {
-                document.getElementById('modal-student').classList.remove('active');
-                if (data.status === 'graduated') renderAlumni();
-                else renderStudents(classId);
-            };
+        studentData.id = Number(id);
+        const tx = db.transaction(['students'], 'readonly');
+        tx.objectStore('students').get(Number(id)).onsuccess = (e) => {
+            const existing = e.target.result;
+            if (existing) {
+                studentData.exams = existing.exams || [];
+                studentData.teacherNotes = existing.teacherNotes || [];
+                studentData.status = existing.status || 'active';
+                if (existing.gradYear) studentData.gradYear = existing.gradYear;
+                if (existing.prevClass) studentData.prevClass = existing.prevClass;
+            }
+            performSaveStudent(studentData);
         };
     } else {
-        const tx = db.transaction(['students'], 'readwrite');
-        tx.objectStore('students').add(data).onsuccess = () => {
-            document.getElementById('modal-student').classList.remove('active');
-            renderStudents(classId);
-        };
+        performSaveStudent(studentData);
     }
+}
+
+function performSaveStudent(studentData) {
+    const tx = db.transaction(['students'], 'readwrite');
+    tx.objectStore('students').put(studentData).onsuccess = () => {
+        document.getElementById('modal-student').classList.remove('active');
+        if (currentClassId) renderStudents(currentClassId);
+        if (currentStudentId) loadStudentProfile(currentStudentId);
+        if (document.getElementById('view-students').classList.contains('active')) {
+            renderAllStudents();
+        }
+    };
 }
 
 function renderStudents(classId) {
